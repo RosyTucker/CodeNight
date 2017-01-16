@@ -1,0 +1,6 @@
+* text=auto
+
+*.sh text=lf
+
+.gitattributes text=lf
+.gitignore text=lf
