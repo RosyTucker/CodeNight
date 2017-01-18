@@ -1,8 +1,8 @@
 set -e
 
 export GOBIN=$(pwd)/bin
-export GOPATH=$(pwd)
 
+go get
 go install
 
-./bin/Codenight.exe
+./bin/codenight.exe

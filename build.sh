@@ -1,6 +1,6 @@
 set -e
-rm -rf pkg/
-mkdir pkg
+
+go get
 
 GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o pkg/codenight-amd64 main.go
 GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o pkg/codenight-linux-386 main.go
