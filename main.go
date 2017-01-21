@@ -41,6 +41,6 @@ func main() {
 	router.GET(userPath, getUser)
 	router.POST(userPath, addUser)
 
-	fmt.Printf("Starting server on port: %s", env.Port)
+	fmt.Printf("Starting server on port: %s \n", env.Port)
 	log.Fatal(http.ListenAndServe(":"+env.Port, router))
 }
