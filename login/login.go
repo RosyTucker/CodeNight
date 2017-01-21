@@ -1,15 +1,14 @@
 package login
 
 import (
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
+	"iceroad/codenight/session"
 	"iceroad/codenight/util"
 	"log"
 	"net/http"
 )
-
-const userPath = "/user"
 
 var env = util.GetEnv()
 
@@ -22,12 +21,12 @@ var oauthConf = &oauth2.Config{
 
 var oauthStateString = env.GithubStateString
 
-func loginHandler(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func loginHandler(res http.ResponseWriter, req *http.Request) {
 	url := oauthConf.AuthCodeURL(oauthStateString, oauth2.AccessTypeOnline)
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
-func oauthCallbackHandler(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	state := req.FormValue("state")
 	if state != oauthStateString {
 		log.Printf("ERROR: Invalid oauth state, expected '%s', got '%s'\n", oauthStateString, state)
@@ -35,20 +34,18 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request, params htt
 		return
 	}
 
-	// code := req.FormValue("code")
-	// token, err := oauthConf.Exchange(oauth2.NoContext, code)
-	// if err != nil {
-	// 	log.Printf("ERROR: oauthConf.Exchange() failed with '%s'\n", err)
-	// 	http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
-	// 	return
-	// }
-
-	sessionCookie := &http.Cookie{Name: "session", Value: "sessionid", HttpOnly: true}
-	http.SetCookie(res, sessionCookie)
+	code := req.FormValue("code")
+	token, err := oauthConf.Exchange(oauth2.NoContext, code)
+	if err != nil {
+		log.Printf("ERROR: oauthConf.Exchange() failed with '%s'\n", err)
+		http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
+		return
+	}
+	session.Set(res, req, "github-token", token.AccessToken)
 	http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
 }
 
-func AddRoutes(router *httprouter.Router) {
-	router.GET("/login", loginHandler)
-	router.GET("/oauthCallback", oauthCallbackHandler)
+func AddRoutes(router *mux.Router) {
+	router.HandleFunc("/login", loginHandler).Methods(http.MethodGet)
+	router.HandleFunc("/oauthCallback", oauthCallbackHandler).Methods(http.MethodGet)
 }

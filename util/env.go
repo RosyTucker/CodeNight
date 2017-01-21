@@ -11,6 +11,7 @@ type Env struct {
 	GithubCallbackUrl string
 	GithubStateString string
 	PostLoginRedirect string
+	SessionKey        string
 }
 
 func GetEnv() Env {
@@ -21,7 +22,8 @@ func GetEnv() Env {
 		GithubSecret:      noDefault("GITHUB_SECRET"),
 		GithubCallbackUrl: noDefault("GITHUB_CALLBACK_URL"),
 		GithubStateString: noDefault("GITHUB_STATE_STRING"),
-		PostLoginRedirect: noDefault("POST_LOGIN_REDIRECT")}
+		PostLoginRedirect: noDefault("POST_LOGIN_REDIRECT"),
+		SessionKey:        noDefault("SESSION_KEY")}
 }
 
 func defaultWhenEmpty(key string, defaultValue string) string {

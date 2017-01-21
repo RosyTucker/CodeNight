@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"iceroad/codenight/login"
 	"iceroad/codenight/user"
 	"iceroad/codenight/util"
@@ -13,12 +13,12 @@ import (
 
 const userPath = "/user"
 
-func getUser(responseWriter http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func getUser(responseWriter http.ResponseWriter, request *http.Request) {
 	user := user.User{Id: 1, Name: "bob", Email: "bob@bob.com", Description: "Bob makes burgers"}
 	util.JsonResponse(responseWriter, user, http.StatusOK)
 }
 
-func addUser(responseWriter http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func addUser(responseWriter http.ResponseWriter, request *http.Request) {
 	userToAdd := user.User{}
 	err := json.NewDecoder(request.Body).Decode(&userToAdd)
 
@@ -35,11 +35,11 @@ func addUser(responseWriter http.ResponseWriter, request *http.Request, params h
 func main() {
 	env := util.GetEnv()
 
-	router := httprouter.New()
+	router := mux.NewRouter()
 
 	login.AddRoutes(router)
-	router.GET(userPath, getUser)
-	router.POST(userPath, addUser)
+	router.HandleFunc(userPath, getUser).Methods(http.MethodGet)
+	router.HandleFunc(userPath, addUser).Methods(http.MethodPost)
 
 	fmt.Printf("Starting server on port: %s \n", env.Port)
 	log.Fatal(http.ListenAndServe(":"+env.Port, router))
