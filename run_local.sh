@@ -7,4 +7,4 @@ go install
 
 
 source env.sh
-./bin/codenight.exe
+mongod & ./bin/codenight.exe

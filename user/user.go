@@ -1,19 +1,30 @@
 package user
 
+import (
+	"github.com/gorilla/mux"
+	"net/http"
+)
+
 type User struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Description string `json:"description"`
+	Id          *int    `json:"id"`
+	Name        *string `json:"name"`
+	UserName    *string `json:"username"`
+	Email       *string `json:"email"`
+	Description *string `json:"description"`
+	Blog        *string `json:"blog"`
+	Location    *string `json:"location"`
+	AvatarUrl   *string `json:"avatar"`
 }
 
-// "github.com/google/go-github/github"
+func getUserHandler(res http.ResponseWriter, req *http.Request) {
+	// vars := mux.Vars(req)
+	// userId := vars["userId"]
+}
 
-// oauthClient := oauthConf.Client(oauth2.NoContext, token)
-// client := github.NewClient(oauthClient)
-// user, _, err := client.Users.Get("")
-// if err != nil {
-// 	log.Printf("ERROR: client.Users.Get() failed with '%s'\n", err)
-// 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-// 	return
-// }
+func Upsert(user User, token string) error {
+	return nil
+}
+
+func AddRoutes(router *mux.Router) {
+	router.HandleFunc("/user/{userId:[0-9]+}", getUserHandler).Methods(http.MethodGet)
+}

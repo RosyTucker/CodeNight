@@ -1,10 +1,12 @@
 package login
 
 import (
+	"github.com/google/go-github/github"
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
 	"iceroad/codenight/session"
+	"iceroad/codenight/user"
 	"iceroad/codenight/util"
 	"log"
 	"net/http"
@@ -42,7 +44,43 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	session.Set(res, req, "github-token", token.AccessToken)
+	user, userErr := fetchUser(token)
+	if userErr != nil {
+		log.Printf("ERROR: Failed to fetch user", userErr)
+		http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
+		return
+	}
+
+	log.Printf("Upserting User with username '%s'\n", *user.UserName)
+
+	upsertErr := user.Upsert(githubUser, token)
+	if upsertErr != nil {
+		log.Printf("ERROR: Failed to create user", upsertErr)
+		http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
+		return
+	}
+
 	http.Redirect(res, req, env.PostLoginRedirect, http.StatusTemporaryRedirect)
+}
+
+func fetchUser(token *oauth2.Token) (*user.User, error) {
+	oauthClient := oauthConf.Client(oauth2.NoContext, token)
+	client := github.NewClient(oauthClient)
+	githubUser, _, err := client.Users.Get("")
+	if err != nil {
+		log.Printf("ERROR: client.Users.Get() failed with '%s'\n", err)
+		return nil, err
+	}
+	user := &user.User{
+		Id:        githubUser.ID,
+		Name:      githubUser.Name,
+		UserName:  githubUser.Login,
+		Email:     githubUser.Email,
+		Blog:      githubUser.Blog,
+		Location:  githubUser.Location,
+		AvatarUrl: githubUser.AvatarURL}
+
+	return user, nil
 }
 
 func AddRoutes(router *mux.Router) {

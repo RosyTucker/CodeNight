@@ -5,25 +5,27 @@ import (
 )
 
 type Env struct {
-	Port              string
-	GithubKey         string
-	GithubSecret      string
-	GithubCallbackUrl string
-	GithubStateString string
-	PostLoginRedirect string
-	SessionKey        string
+	Port                  string
+	GithubKey             string
+	GithubSecret          string
+	GithubCallbackUrl     string
+	GithubStateString     string
+	PostLoginRedirect     string
+	SessionKey            string
+	MongoConnectionString string
 }
 
 func GetEnv() Env {
 	const defaultPort = "4000"
 	return Env{
-		Port:              defaultWhenEmpty("PORT", defaultPort),
-		GithubKey:         noDefault("GITHUB_KEY"),
-		GithubSecret:      noDefault("GITHUB_SECRET"),
-		GithubCallbackUrl: noDefault("GITHUB_CALLBACK_URL"),
-		GithubStateString: noDefault("GITHUB_STATE_STRING"),
-		PostLoginRedirect: noDefault("POST_LOGIN_REDIRECT"),
-		SessionKey:        noDefault("SESSION_KEY")}
+		Port:                  defaultWhenEmpty("PORT", defaultPort),
+		GithubKey:             noDefault("GITHUB_KEY"),
+		GithubSecret:          noDefault("GITHUB_SECRET"),
+		GithubCallbackUrl:     noDefault("GITHUB_CALLBACK_URL"),
+		GithubStateString:     noDefault("GITHUB_STATE_STRING"),
+		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
+		SessionKey:            noDefault("SESSION_KEY"),
+		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING")}
 }
 
 func defaultWhenEmpty(key string, defaultValue string) string {
