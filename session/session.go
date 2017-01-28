@@ -2,7 +2,7 @@ package session
 
 import (
 	"github.com/gorilla/sessions"
-	"iceroad/codenight/util/env"
+	"iceroad/codenight/env"
 	"log"
 	"net/http"
 )
