@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"iceroad/codenight/login"
 	"iceroad/codenight/user"
-	"iceroad/codenight/util"
+	_ "iceroad/codenight/util/db"
+	"iceroad/codenight/util/env"
+	_ "iceroad/codenight/util/session"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	env := util.GetEnv()
+	log.SetOutput(os.Stdout)
+	environment := env.Get()
 
 	router := mux.NewRouter()
 
 	user.AddRoutes(router)
 	login.AddRoutes(router)
 
-	fmt.Printf("Starting server on port: %s \n", env.Port)
-	log.Fatal(http.ListenAndServe(":"+env.Port, router))
+	log.Printf("Starting server on port: %s \n", environment.Port)
+	log.Fatal(http.ListenAndServe(":"+environment.Port, router))
 }

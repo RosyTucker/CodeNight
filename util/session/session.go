@@ -2,15 +2,18 @@ package session
 
 import (
 	"github.com/gorilla/sessions"
-	"iceroad/codenight/util"
+	"iceroad/codenight/util/env"
 	"log"
 	"net/http"
 )
 
-var env = util.GetEnv()
-
 // TODO Use redis
-var sessionStore = sessions.NewCookieStore([]byte(env.SessionKey))
+var sessionStore *sessions.CookieStore
+
+func init() {
+	var env = env.Get()
+	sessionStore = sessions.NewCookieStore([]byte(env.SessionKey))
+}
 
 func Set(res http.ResponseWriter, req *http.Request, key string, value string) {
 	session, _ := sessionStore.Get(req, "session")
