@@ -45,16 +45,19 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	isAdmin := *githubUser.Login == environment.MasterUser
+
 	user := &User{
 		Name:      githubUser.Name,
 		Token:     web.EncodeJson(token),
-		UserName:  githubUser.Login,
+		UserName:  *githubUser.Login,
 		Email:     githubUser.Email,
 		Blog:      githubUser.Blog,
 		Location:  githubUser.Location,
-		AvatarUrl: githubUser.AvatarURL}
+		AvatarUrl: githubUser.AvatarURL,
+		IsAdmin:   isAdmin}
 
-	log.Printf("Creating User with username '%s' if they dont already exist \n", *user.UserName)
+	log.Printf("Creating User with username '%s' if they dont already exist \n", user.UserName)
 	userId, err := CreateIfNotExists(user)
 
 	if err != nil {
@@ -64,7 +67,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	session.Set(res, req, "userId", userId)
-	log.Printf("Created User with Id '%+v' \n", userId)
+	log.Printf("Updated User with Id '%+v' \n", userId)
 
 	res.Header().Set("Location", "/user/"+userId)
 	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)

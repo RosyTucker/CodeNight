@@ -6,12 +6,13 @@ import (
 
 type User struct {
 	Id          bson.ObjectId `bson:"_id,omitempty"`
-	Name        *string       `json:"name", bson:"name"`
+	Name        *string       `json:"name" bson:"name"`
 	Token       string        `json:"-" bson:"token"`
-	UserName    *string       `json:"username", bson:"username"`
-	Email       *string       `json:"email", bson:"email"`
-	Description *string       `json:"description", bson:"description"`
-	Blog        *string       `json:"blog", bson:"blog"`
-	Location    *string       `json:"location", bson:"location"`
-	AvatarUrl   *string       `json:"avatar", bson: "avatar"`
+	UserName    string        `json:"username" bson:"username"`
+	Email       *string       `json:"email" bson:"email"`
+	Description *string       `json:"description" bson:"description"`
+	Blog        *string       `json:"blog" bson:"blog"`
+	Location    *string       `json:"location" bson:"location"`
+	AvatarUrl   *string       `json:"avatar_url" bson:"avatar_url"`
+	IsAdmin     bool          `json:"isAdmin" bson:"is_admin"`
 }

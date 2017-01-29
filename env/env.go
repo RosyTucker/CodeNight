@@ -13,6 +13,7 @@ type Env struct {
 	PostLoginRedirect     string
 	SessionKey            string
 	MongoConnectionString string
+	MasterUser            string
 }
 
 var environment Env
@@ -26,7 +27,8 @@ func init() {
 		GithubStateString:     noDefault("GITHUB_STATE_STRING"),
 		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
 		SessionKey:            noDefault("SESSION_KEY"),
-		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING")}
+		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING"),
+		MasterUser:            noDefault("MASTER_USER")}
 }
 
 func Get() Env {

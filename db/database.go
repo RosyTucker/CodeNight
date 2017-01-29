@@ -6,13 +6,24 @@ import (
 	"log"
 )
 
-func Connect() (session *mgo.Session) {
+var session *mgo.Session
+
+func init() {
+	log.Println("---- Connecting to DB ----")
 	environment := env.Get()
-	session, err := mgo.Dial(environment.MongoConnectionString)
+
+	var err error
+
+	session, err = mgo.Dial(environment.MongoConnectionString)
+
 	if err != nil {
-		log.Printf("Can't connect to mongo, go error %v\n", err)
+		log.Printf("ERROR: Can't connect to mongo, go error %+v\n", err)
 		panic(err)
 	}
+
 	session.SetSafe(&mgo.Safe{})
-	return session
+}
+
+func Connect() *mgo.Session {
+	return session.Copy()
 }

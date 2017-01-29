@@ -13,6 +13,7 @@ import (
 
 func main() {
 	log.SetOutput(os.Stdout)
+
 	environment := env.Get()
 
 	router := mux.NewRouter()
