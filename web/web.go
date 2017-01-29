@@ -6,6 +6,9 @@ import (
 )
 
 const ErrorCodeNotFound = "not_found"
+const ErrorCodeInvalidFormat = "invalid_format"
+const ErrorCodeServerError = "server_error"
+const ErrorCodeForbidden = "forbidden"
 
 func JsonResponse(responseWriter http.ResponseWriter, bodyObj interface{}, statusCode int) {
 	responseWriter.WriteHeader(statusCode)

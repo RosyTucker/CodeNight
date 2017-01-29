@@ -1,18 +1,40 @@
 package user
 
 import (
+	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 	"iceroad/codenight/db"
 	"log"
 )
 
-func GetById(userId string) (User, error) {
+func GetPublicById(userId string) (*PublicUser, error) {
+	user, err := GetById(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	publicUser := &PublicUser{
+		Id:          user.Id,
+		Name:        user.Name,
+		UserName:    user.UserName,
+		Description: user.Description,
+		Blog:        user.Blog,
+		Location:    user.Location,
+		AvatarUrl:   user.AvatarUrl}
+
+	return publicUser, err
+}
+
+func GetById(userId string) (*User, error) {
+	if !bson.IsObjectIdHex(userId) {
+		return nil, errors.New("Invalid user id format")
+	}
+
 	session := db.Connect().Copy()
 	defer session.Close()
 	usersColl := session.DB("codenight").C("users")
 
-	var result User
-
+	var result *User
 	err := usersColl.FindId(bson.ObjectIdHex(userId)).One(&result)
 	return result, err
 }
@@ -39,4 +61,37 @@ func CreateIfNotExists(user *User) (string, error) {
 	err = usersColl.Insert(&user)
 
 	return user.Id.Hex(), err
+}
+
+func Replace(userId string, updatedUser *User) error {
+	if !bson.IsObjectIdHex(userId) {
+		return errors.New("Invalid user id format")
+	}
+
+	session := db.Connect().Copy()
+	defer session.Close()
+	usersColl := session.DB("codenight").C("users")
+
+	var existingUser User
+	err := usersColl.FindId(bson.ObjectIdHex(userId)).One(&existingUser)
+
+	if err != nil {
+		return err
+	}
+
+	user := &User{
+		Id:          existingUser.Id,
+		Name:        updatedUser.Name,
+		Token:       existingUser.Token,
+		UserName:    existingUser.UserName,
+		Email:       existingUser.Email,
+		Description: updatedUser.Description,
+		Blog:        updatedUser.Blog,
+		Location:    updatedUser.Location,
+		AvatarUrl:   existingUser.AvatarUrl,
+		IsAdmin:     existingUser.IsAdmin}
+
+	err = usersColl.UpdateId(existingUser.Id, user)
+
+	return err
 }

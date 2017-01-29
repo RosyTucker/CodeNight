@@ -24,8 +24,8 @@ func Set(res http.ResponseWriter, req *http.Request, key string, value string) {
 	}
 }
 
-func Get(req *http.Request, key string) interface{} {
+func Get(req *http.Request, key string) string {
 	session, _ := sessionStore.Get(req, "session")
 	value := session.Values[key]
-	return value
+	return value.(string)
 }
