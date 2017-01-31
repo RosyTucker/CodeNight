@@ -2,10 +2,10 @@ package user
 
 import (
 	"github.com/gorilla/mux"
-	"iceroad/codenight/config"
-	"iceroad/codenight/github"
-	"iceroad/codenight/session"
-	"iceroad/codenight/web"
+	"github.com/rosytucker/codenight/config"
+	"github.com/rosytucker/codenight/github"
+	"github.com/rosytucker/codenight/session"
+	"github.com/rosytucker/codenight/web"
 	"log"
 	"net/http"
 )

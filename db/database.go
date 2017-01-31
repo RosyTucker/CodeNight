@@ -1,8 +1,8 @@
 package db
 
 import (
+	"github.com/rosytucker/codenight/config"
 	"gopkg.in/mgo.v2"
-	"iceroad/codenight/config"
 	"log"
 )
 

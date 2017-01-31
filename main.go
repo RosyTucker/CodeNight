@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	"iceroad/codenight/config"
-	"iceroad/codenight/db"
-	"iceroad/codenight/github"
-	"iceroad/codenight/session"
-	"iceroad/codenight/user"
+	"github.com/rosytucker/codenight/config"
+	"github.com/rosytucker/codenight/db"
+	"github.com/rosytucker/codenight/github"
+	"github.com/rosytucker/codenight/session"
+	"github.com/rosytucker/codenight/user"
 	"log"
 	"net/http"
 	"os"

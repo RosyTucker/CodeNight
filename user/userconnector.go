@@ -1,8 +1,8 @@
 package user
 
 import (
+	"github.com/rosytucker/codenight/db"
 	"gopkg.in/mgo.v2/bson"
-	"iceroad/codenight/db"
 	"log"
 )
 

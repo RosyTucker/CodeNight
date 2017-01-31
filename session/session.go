@@ -2,7 +2,7 @@ package session
 
 import (
 	"github.com/gorilla/sessions"
-	"iceroad/codenight/config"
+	"github.com/rosytucker/codenight/config"
 	"log"
 	"net/http"
 )

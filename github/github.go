@@ -3,9 +3,9 @@ package github
 import (
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
+	"github.com/rosytucker/codenight/config"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
-	"iceroad/codenight/config"
 	"log"
 	"net/http"
 )
