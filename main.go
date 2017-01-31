@@ -2,9 +2,10 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	_ "iceroad/codenight/db"
-	"iceroad/codenight/env"
-	_ "iceroad/codenight/session"
+	"iceroad/codenight/config"
+	"iceroad/codenight/db"
+	"iceroad/codenight/github"
+	"iceroad/codenight/session"
 	"iceroad/codenight/user"
 	"log"
 	"net/http"
@@ -14,7 +15,11 @@ import (
 func main() {
 	log.SetOutput(os.Stdout)
 
-	environment := env.Get()
+	environment := config.GetEnv()
+
+	session.SetupStore(environment)
+	db.EstablishInitialConnection(environment)
+	github.ConfigureClient(environment)
 
 	router := mux.NewRouter()
 

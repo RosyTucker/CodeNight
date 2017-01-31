@@ -5,21 +5,23 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
-	"iceroad/codenight/env"
+	"iceroad/codenight/config"
 	"log"
 	"net/http"
 )
 
-var environment = env.Get()
+var oauthConf *oauth2.Config
+var oauthStateString string
 
-var oauthConf = &oauth2.Config{
-	ClientID:     environment.GithubKey,
-	ClientSecret: environment.GithubSecret,
-	Scopes:       []string{"user", "repo"},
-	Endpoint:     githuboauth.Endpoint,
+func ConfigureClient(environment config.Env) {
+	oauthConf = &oauth2.Config{
+		ClientID:     environment.GithubKey,
+		ClientSecret: environment.GithubSecret,
+		Scopes:       []string{"user", "repo"},
+		Endpoint:     githuboauth.Endpoint}
+
+	oauthStateString = environment.GithubStateString
 }
-
-var oauthStateString = environment.GithubStateString
 
 func LoginRedirectUrl() string {
 	return oauthConf.AuthCodeURL(oauthStateString, oauth2.AccessTypeOnline)

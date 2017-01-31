@@ -1,4 +1,4 @@
-package env
+package config
 
 import (
 	"os"
@@ -16,10 +16,8 @@ type Env struct {
 	MasterUser            string
 }
 
-var environment Env
-
-func init() {
-	environment = Env{
+func GetEnv() Env {
+	return Env{
 		Port:                  defaultWhenEmpty("PORT", "4000"),
 		GithubKey:             noDefault("GITHUB_KEY"),
 		GithubSecret:          noDefault("GITHUB_SECRET"),
@@ -29,10 +27,6 @@ func init() {
 		SessionKey:            noDefault("SESSION_KEY"),
 		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING"),
 		MasterUser:            noDefault("MASTER_USER")}
-}
-
-func Get() Env {
-	return environment
 }
 
 func defaultWhenEmpty(key string, defaultValue string) string {

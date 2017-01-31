@@ -1,7 +1,6 @@
 package user
 
 import (
-	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 	"iceroad/codenight/db"
 	"log"
@@ -26,10 +25,6 @@ func GetPublicById(userId string) (*PublicUser, error) {
 }
 
 func GetById(userId string) (*User, error) {
-	if !bson.IsObjectIdHex(userId) {
-		return nil, errors.New("Invalid user id format")
-	}
-
 	session := db.Connect().Copy()
 	defer session.Close()
 	usersColl := session.DB("codenight").C("users")
@@ -64,10 +59,6 @@ func CreateIfNotExists(user *User) (string, error) {
 }
 
 func Replace(userId string, updatedUser *User) error {
-	if !bson.IsObjectIdHex(userId) {
-		return errors.New("Invalid user id format")
-	}
-
 	session := db.Connect().Copy()
 	defer session.Close()
 	usersColl := session.DB("codenight").C("users")

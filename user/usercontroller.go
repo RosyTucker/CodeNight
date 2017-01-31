@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/gorilla/mux"
-	"iceroad/codenight/env"
+	"iceroad/codenight/config"
 	"iceroad/codenight/github"
 	"iceroad/codenight/session"
 	"iceroad/codenight/web"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-var environment = env.Get()
+var environment = config.GetEnv()
 
 func AddRoutes(router *mux.Router) {
 	router.HandleFunc("/user/current", getCurrentUserHandler).Methods(http.MethodGet)
@@ -22,9 +22,19 @@ func AddRoutes(router *mux.Router) {
 
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
 	userId := mux.Vars(req)["userId"]
-	user, err := GetPublicById(userId)
 
 	log.Printf("Finding user with id: %+v \n", userId)
+
+	validUserId := ValidateId(userId)
+
+	if !validUserId {
+		log.Printf("ERROR: Invalid user id format '%s'\n", userId)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
+		web.JsonResponse(res, httpError, http.StatusNotFound)
+		return
+	}
+
+	user, err := GetPublicById(userId)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to find user %+v \n", err)
@@ -54,6 +64,15 @@ func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
 
 func putUserHandler(res http.ResponseWriter, req *http.Request) {
 	userId := mux.Vars(req)["userId"]
+
+	validUserId := ValidateId(userId)
+
+	if validUserId {
+		log.Printf("ERROR: Invalid user id format '%s'\n", userId)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
+		web.JsonResponse(res, httpError, http.StatusNotFound)
+		return
+	}
 
 	loggedInUserId := session.Get(req, "userId")
 

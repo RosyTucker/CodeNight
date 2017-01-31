@@ -2,18 +2,16 @@ package db
 
 import (
 	"gopkg.in/mgo.v2"
-	"iceroad/codenight/env"
+	"iceroad/codenight/config"
 	"log"
 )
 
 var session *mgo.Session
 
-func init() {
+func EstablishInitialConnection(environment config.Env) {
 	log.Println("---- Connecting to DB ----")
-	environment := env.Get()
 
 	var err error
-
 	session, err = mgo.Dial(environment.MongoConnectionString)
 
 	if err != nil {
