@@ -23,14 +23,10 @@ func AddRoutes(router *mux.Router) {
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
 	userId := mux.Vars(req)["userId"]
 
-	log.Printf("Finding user with id: %+v \n", userId)
+	log.Printf("Getting User with Id '%+v' \n", userId)
 
-	validUserId := ValidateId(userId)
-
-	if !validUserId {
-		log.Printf("ERROR: Invalid user id format '%s'\n", userId)
-		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
-		web.JsonResponse(res, httpError, http.StatusNotFound)
+	isHandled := handleInvalidUserIdForRequest(userId, false, res, req)
+	if isHandled {
 		return
 	}
 
@@ -42,15 +38,22 @@ func getUserHandler(res http.ResponseWriter, req *http.Request) {
 		web.JsonResponse(res, httpError, http.StatusNotFound)
 		return
 	}
+
 	log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
 	web.JsonResponse(res, user, http.StatusOK)
 }
 
 func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
-	userId := session.Get(req, "userId")
-	user, err := GetById(userId)
+	loggedInUserId, err := session.Get(req, "userId")
 
-	log.Printf("Finding user with id: %+v \n", userId)
+	isHandled := handleInvalidUserIdForRequest(loggedInUserId, false, res, req)
+	if isHandled {
+		return
+	}
+
+	user, err := GetById(loggedInUserId)
+
+	log.Printf("Finding current user with id: %+v \n", loggedInUserId)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to find current user %+v \n", err)
@@ -65,25 +68,12 @@ func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
 func putUserHandler(res http.ResponseWriter, req *http.Request) {
 	userId := mux.Vars(req)["userId"]
 
-	validUserId := ValidateId(userId)
+	log.Printf("Putting User with Id '%+v' \n", userId)
 
-	if validUserId {
-		log.Printf("ERROR: Invalid user id format '%s'\n", userId)
-		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
-		web.JsonResponse(res, httpError, http.StatusNotFound)
+	isHandled := handleInvalidUserIdForRequest(userId, true, res, req)
+	if isHandled {
 		return
 	}
-
-	loggedInUserId := session.Get(req, "userId")
-
-	if loggedInUserId != userId {
-		log.Printf("ERROR: User %s attempted to update user %s \n", loggedInUserId, userId)
-		httpError := web.HttpError{Code: web.ErrorCodeForbidden, Message: "you can only update yourself"}
-		web.JsonResponse(res, httpError, http.StatusForbidden)
-		return
-	}
-
-	log.Printf("PUTTING User with Id '%+v' \n", userId)
 
 	user, err := FromJsonBody(req.Body)
 
@@ -141,7 +131,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	userId, err := CreateIfNotExists(user)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to create user", err)
+		log.Printf("ERROR: Failed to create user %+v \n", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
@@ -156,4 +146,38 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 func loginHandler(res http.ResponseWriter, req *http.Request) {
 	url := github.LoginRedirectUrl()
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
+}
+
+func handleInvalidUserIdForRequest(requestedUserId string, requiresSelf bool, res http.ResponseWriter, req *http.Request) bool {
+	log.Printf("Validating request for user with id: %+v \n", requestedUserId)
+
+	loggedInUserId, err := session.Get(req, "userId")
+
+	if err != nil {
+		log.Printf("ERROR: User not logged in and attempted to access user %s \n", requestedUserId)
+		httpError := web.HttpError{
+			Code:    web.ErrorCodeUnauthorized,
+			Message: "you must be logged in try and view user information"}
+		web.JsonResponse(res, httpError, http.StatusUnauthorized)
+		return true
+	}
+
+	if requiresSelf && loggedInUserId != requestedUserId {
+		log.Printf("ERROR: User %s attempted to access user %s \n", loggedInUserId, requestedUserId)
+		httpError := web.HttpError{
+			Code:    web.ErrorCodeForbidden,
+			Message: "you can only update yourself"}
+		web.JsonResponse(res, httpError, http.StatusForbidden)
+		return true
+	}
+
+	validUserId := ValidateId(requestedUserId)
+
+	if !validUserId {
+		log.Printf("ERROR: Invalid user id format '%s'\n", requestedUserId)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
+		web.JsonResponse(res, httpError, http.StatusNotFound)
+		return true
+	}
+	return false
 }

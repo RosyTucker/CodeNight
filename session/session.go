@@ -23,8 +23,12 @@ func Set(res http.ResponseWriter, req *http.Request, key string, value string) {
 	}
 }
 
-func Get(req *http.Request, key string) string {
-	session, _ := sessionStore.Get(req, "session")
+func Get(req *http.Request, key string) (string, error) {
+	session, err := sessionStore.Get(req, "session")
+	if err != nil {
+		return "", err
+	}
 	value := session.Values[key]
-	return value.(string)
+	log.Printf("Value from session store: %+v \n", value)
+	return value.(string), nil
 }
