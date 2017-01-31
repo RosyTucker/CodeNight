@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/gorilla/sessions"
+	"github.com/pkg/errors"
 	"github.com/rosytucker/codenight/config"
 	"log"
 	"net/http"
@@ -26,9 +27,13 @@ func Set(res http.ResponseWriter, req *http.Request, key string, value string) {
 func Get(req *http.Request, key string) (string, error) {
 	session, err := sessionStore.Get(req, "session")
 	if err != nil {
+		log.Printf("ERROR: Could not get session from request %+v \n", err)
 		return "", err
 	}
 	value := session.Values[key]
-	log.Printf("Value from session store: %+v \n", value)
+
+	if value == nil {
+		return "", errors.Errorf("Value for key %s not found in session store", key)
+	}
 	return value.(string), nil
 }
