@@ -1,69 +1,43 @@
 package user
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/mux"
 	"github.com/rosytucker/codenight/config"
 	"github.com/rosytucker/codenight/github"
 	"github.com/rosytucker/codenight/web"
 	"log"
 	"net/http"
-	"time"
 )
 
 var environment = config.GetEnv()
 
 func AddRoutes(router *mux.Router) {
-	router.HandleFunc("/user/current", requiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
+	router.HandleFunc("/user/current", web.RequiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", getUserHandler).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", putUserHandler).Methods(http.MethodPut)
 	router.HandleFunc("/login", loginHandler).Methods(http.MethodGet)
 	router.HandleFunc("/oauthCallback", oauthCallbackHandler).Methods(http.MethodGet)
 }
 
-func requiresAuth(next func(http.ResponseWriter, *http.Request, *JwtClaims)) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		token, err := request.ParseFromRequestWithClaims(req, request.OAuth2Extractor, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return environment.JwtPublicKey, nil
-		})
-
-		if err nil {
-			log.Printf("ERROR: User not logged in or Invalid JWT '%+v' \n", err)
-			httpError := web.HttpError{
-				Code:    web.ErrorCodeUnauthorized,
-				Message: "you must be logged in try and view user information"}
-			web.JsonResponse(res, httpError, http.StatusUnauthorized)
-			return!= 
-		}
-		next(res, req, token.Claims.(*JwtClaims))
-	}
-}
-
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
-	// userId := mux.Vars(req)["userId"]
+	userId := mux.Vars(req)["userId"]
 
-	// log.Printf("Getting User with Id '%+v' \n", userId)
+	log.Printf("Getting User with Id '%+v' \n", userId)
 
-	// isHandled := handleInvalidUserIdForRequest(userId, false, res, req)
-	// if isHandled {
-	// 	return
-	// }
+	user, err := GetPublicById(userId)
 
-	// user, err := GetPublicById(userId)
+	if err != nil {
+		log.Printf("ERROR: Failed to find user %+v \n", err)
+		httpError := web.HttpError{Code: web.ErrorCodeNotFound}
+		web.JsonResponse(res, httpError, http.StatusNotFound)
+		return
+	}
 
-	// if err != nil {
-	// 	log.Printf("ERROR: Failed to find user %+v \n", err)
-	// 	httpError := web.HttpError{Code: web.ErrorCodeNotFound}
-	// 	web.JsonResponse(res, httpError, http.StatusNotFound)
-	// 	return
-	// }
-
-	// log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
-	// web.JsonResponse(res, user, http.StatusOK)
+	log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
+	web.JsonResponse(res, user, http.StatusOK)
 }
 
-func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *JwtClaims) {
+func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtClaims) {
 	userId := claims.UserId
 
 	log.Printf("Finding current user with id: %+v \n", userId)
@@ -81,36 +55,36 @@ func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *J
 }
 
 func putUserHandler(res http.ResponseWriter, req *http.Request) {
-	// userId := mux.Vars(req)["userId"]
+	userId := mux.Vars(req)["userId"]
 
-	// log.Printf("Putting User with Id '%+v' \n", userId)
+	log.Printf("Putting User with Id '%+v' \n", userId)
 
-	// isHandled := handleInvalidUserIdForRequest(userId, true, res, req)
-	// if isHandled { 
-	// 	return
-	// }
+	user, err := FromJsonBody(req.Body)
 
-	// user, err := FromJsonBody(req.Body)
+	if err != nil {
+		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
+		web.JsonResponse(res, httpError, http.StatusBadRequest)
+		return
+	}
 
-	// if err != nil {
-	// 	log.Printf("ERROR: Failed to read body as json user %+v \n", err)
-	// 	httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
-	// 	web.JsonResponse(res, httpError, http.StatusBadRequest)
-	// 	return
-	// }
+	err = Replace(userId, user)
 
-	// err = Replace(userId, user)
+	if err != nil {
+		log.Printf("ERROR: Failed to PUT user %+v \n", err)
+		httpError := web.HttpError{Code: web.ErrorCodeServerError}
+		web.JsonResponse(res, httpError, http.StatusInternalServerError)
+		return
+	}
 
-	// if err != nil {
-	// 	log.Printf("ERROR: Failed to PUT user %+v \n", err)
-	// 	httpError := web.HttpError{Code: web.ErrorCodeServerError}
-	// 	web.JsonResponse(res, httpError, http.StatusInternalServerError)
-	// 	return
-	// }
+	log.Printf("SUCCESS: PUT User with Id '%+v' \n", userId)
+	res.Header().Set("Location", "/user/"+userId)
+	res.WriteHeader(http.StatusNoContent)
+}
 
-	// log.Printf("SUCCESS: PUT User with Id '%+v' \n", userId)
-	// res.Header().Set("Location", "/user/"+userId)
-	// res.WriteHeader(http.StatusNoContent)
+func loginHandler(res http.ResponseWriter, req *http.Request) {
+	url := github.LoginRedirectUrl()
+	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
 func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
@@ -150,43 +124,8 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("Updated User with Id '%+v', adding JWT \n", userId)
 
-	jwt, err := createJwt(userId, user)
-
-	if err != nil {
-		log.Printf("ERROR: Failed to create jwt '%+v' \n", err)
-		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
-		return
-	}
-
-	cookie := http.Cookie{Name: "Auth", Value: jwt, Expires: time.Now().Add(time.Hour * environment.JwtExpiryHours), HttpOnly: true}
-	http.SetCookie(res, &cookie)
+	web.SetJwt(res, req, userId, user.IsAdmin)
 
 	res.Header().Set("Location", "/user/"+userId)
 	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
-}
-
-func loginHandler(res http.ResponseWriter, req *http.Request) {
-	url := github.LoginRedirectUrl()
-	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
-}
-
-type JwtClaims struct {
-	UserId  string
-	IsAdmin bool
-	jwt.StandardClaims
-}
-
-func createJwt(userId string, user *User) (string, error) {
-	// create the token
-	token := jwt.New(jwt.SigningMethodRS256)
-
-	log.Printf("User id in token '%+v' \n", userId)
-
-	token.Claims = JwtClaims{
-		userId,
-		user.IsAdmin,
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Hour * environment.JwtExpiryHours).Unix()}}
-
-	//Sign and get the complete encoded token as string
-	return token.SignedString(environment.JwtPrivateKey)
 }
