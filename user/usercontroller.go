@@ -15,11 +15,29 @@ import (
 var environment = config.GetEnv()
 
 func AddRoutes(router *mux.Router) {
-	router.HandleFunc("/user/current", getCurrentUserHandler).Methods(http.MethodGet)
+	router.HandleFunc("/user/current", requiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", getUserHandler).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", putUserHandler).Methods(http.MethodPut)
 	router.HandleFunc("/login", loginHandler).Methods(http.MethodGet)
 	router.HandleFunc("/oauthCallback", oauthCallbackHandler).Methods(http.MethodGet)
+}
+
+func requiresAuth(next func(http.ResponseWriter, *http.Request, *JwtClaims)) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		token, err := request.ParseFromRequestWithClaims(req, request.OAuth2Extractor, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return environment.JwtPublicKey, nil
+		})
+
+		if err nil {
+			log.Printf("ERROR: User not logged in or Invalid JWT '%+v' \n", err)
+			httpError := web.HttpError{
+				Code:    web.ErrorCodeUnauthorized,
+				Message: "you must be logged in try and view user information"}
+			web.JsonResponse(res, httpError, http.StatusUnauthorized)
+			return!= 
+		}
+		next(res, req, token.Claims.(*JwtClaims))
+	}
 }
 
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
@@ -45,21 +63,8 @@ func getUserHandler(res http.ResponseWriter, req *http.Request) {
 	// web.JsonResponse(res, user, http.StatusOK)
 }
 
-func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
-	token, err := request.ParseFromRequestWithClaims(req, request.OAuth2Extractor, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return environment.JwtPublicKey, nil
-	})
-
-	if err != nil {
-		log.Printf("ERROR: User not logged in or Invalid JWT '%+v' \n", err)
-		httpError := web.HttpError{
-			Code:    web.ErrorCodeUnauthorized,
-			Message: "you must be logged in try and view user information"}
-		web.JsonResponse(res, httpError, http.StatusUnauthorized)
-		return
-	}
-
-	userId := token.Claims.(*JwtClaims).UserId
+func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *JwtClaims) {
+	userId := claims.UserId
 
 	log.Printf("Finding current user with id: %+v \n", userId)
 
@@ -81,7 +86,7 @@ func putUserHandler(res http.ResponseWriter, req *http.Request) {
 	// log.Printf("Putting User with Id '%+v' \n", userId)
 
 	// isHandled := handleInvalidUserIdForRequest(userId, true, res, req)
-	// if isHandled {
+	// if isHandled { 
 	// 	return
 	// }
 
