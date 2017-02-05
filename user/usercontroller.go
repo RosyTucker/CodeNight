@@ -1,13 +1,15 @@
 package user
 
 import (
+	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/mux"
 	"github.com/rosytucker/codenight/config"
 	"github.com/rosytucker/codenight/github"
-	"github.com/rosytucker/codenight/session"
 	"github.com/rosytucker/codenight/web"
 	"log"
 	"net/http"
+	"time"
 )
 
 var environment = config.GetEnv()
@@ -21,39 +23,47 @@ func AddRoutes(router *mux.Router) {
 }
 
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
-	userId := mux.Vars(req)["userId"]
+	// userId := mux.Vars(req)["userId"]
 
-	log.Printf("Getting User with Id '%+v' \n", userId)
+	// log.Printf("Getting User with Id '%+v' \n", userId)
 
-	isHandled := handleInvalidUserIdForRequest(userId, false, res, req)
-	if isHandled {
-		return
-	}
+	// isHandled := handleInvalidUserIdForRequest(userId, false, res, req)
+	// if isHandled {
+	// 	return
+	// }
 
-	user, err := GetPublicById(userId)
+	// user, err := GetPublicById(userId)
 
-	if err != nil {
-		log.Printf("ERROR: Failed to find user %+v \n", err)
-		httpError := web.HttpError{Code: web.ErrorCodeNotFound}
-		web.JsonResponse(res, httpError, http.StatusNotFound)
-		return
-	}
+	// if err != nil {
+	// 	log.Printf("ERROR: Failed to find user %+v \n", err)
+	// 	httpError := web.HttpError{Code: web.ErrorCodeNotFound}
+	// 	web.JsonResponse(res, httpError, http.StatusNotFound)
+	// 	return
+	// }
 
-	log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
-	web.JsonResponse(res, user, http.StatusOK)
+	// log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
+	// web.JsonResponse(res, user, http.StatusOK)
 }
 
 func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
-	loggedInUserId, err := session.Get(req, "userId")
+	token, err := request.ParseFromRequestWithClaims(req, request.OAuth2Extractor, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return environment.JwtPublicKey, nil
+	})
 
-	isHandled := handleInvalidUserIdForRequest(loggedInUserId, false, res, req)
-	if isHandled {
+	if err != nil {
+		log.Printf("ERROR: User not logged in or Invalid JWT '%+v' \n", err)
+		httpError := web.HttpError{
+			Code:    web.ErrorCodeUnauthorized,
+			Message: "you must be logged in try and view user information"}
+		web.JsonResponse(res, httpError, http.StatusUnauthorized)
 		return
 	}
 
-	user, err := GetById(loggedInUserId)
+	userId := token.Claims.(*JwtClaims).UserId
 
-	log.Printf("Finding current user with id: %+v \n", loggedInUserId)
+	log.Printf("Finding current user with id: %+v \n", userId)
+
+	user, err := GetById(userId)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to find current user %+v \n", err)
@@ -66,36 +76,36 @@ func getCurrentUserHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func putUserHandler(res http.ResponseWriter, req *http.Request) {
-	userId := mux.Vars(req)["userId"]
+	// userId := mux.Vars(req)["userId"]
 
-	log.Printf("Putting User with Id '%+v' \n", userId)
+	// log.Printf("Putting User with Id '%+v' \n", userId)
 
-	isHandled := handleInvalidUserIdForRequest(userId, true, res, req)
-	if isHandled {
-		return
-	}
+	// isHandled := handleInvalidUserIdForRequest(userId, true, res, req)
+	// if isHandled {
+	// 	return
+	// }
 
-	user, err := FromJsonBody(req.Body)
+	// user, err := FromJsonBody(req.Body)
 
-	if err != nil {
-		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
-		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
-		web.JsonResponse(res, httpError, http.StatusBadRequest)
-		return
-	}
+	// if err != nil {
+	// 	log.Printf("ERROR: Failed to read body as json user %+v \n", err)
+	// 	httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
+	// 	web.JsonResponse(res, httpError, http.StatusBadRequest)
+	// 	return
+	// }
 
-	err = Replace(userId, user)
+	// err = Replace(userId, user)
 
-	if err != nil {
-		log.Printf("ERROR: Failed to PUT user %+v \n", err)
-		httpError := web.HttpError{Code: web.ErrorCodeServerError}
-		web.JsonResponse(res, httpError, http.StatusInternalServerError)
-		return
-	}
+	// if err != nil {
+	// 	log.Printf("ERROR: Failed to PUT user %+v \n", err)
+	// 	httpError := web.HttpError{Code: web.ErrorCodeServerError}
+	// 	web.JsonResponse(res, httpError, http.StatusInternalServerError)
+	// 	return
+	// }
 
-	log.Printf("SUCCESS: PUT User with Id '%+v' \n", userId)
-	res.Header().Set("Location", "/user/"+userId)
-	res.WriteHeader(http.StatusNoContent)
+	// log.Printf("SUCCESS: PUT User with Id '%+v' \n", userId)
+	// res.Header().Set("Location", "/user/"+userId)
+	// res.WriteHeader(http.StatusNoContent)
 }
 
 func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
@@ -115,8 +125,6 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	isAdmin := *githubUser.Login == environment.MasterUser
-
 	user := &User{
 		Name:      githubUser.Name,
 		Token:     web.EncodeJson(token),
@@ -125,7 +133,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		Blog:      githubUser.Blog,
 		Location:  githubUser.Location,
 		AvatarUrl: githubUser.AvatarURL,
-		IsAdmin:   isAdmin}
+		IsAdmin:   *githubUser.Login == environment.MasterUser}
 
 	log.Printf("Creating User with username '%s' if they dont already exist \n", user.UserName)
 	userId, err := CreateIfNotExists(user)
@@ -135,9 +143,18 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
+	log.Printf("Updated User with Id '%+v', adding JWT \n", userId)
 
-	session.Set(res, req, "userId", userId)
-	log.Printf("Updated User with Id '%+v' \n", userId)
+	jwt, err := createJwt(userId, user)
+
+	if err != nil {
+		log.Printf("ERROR: Failed to create jwt '%+v' \n", err)
+		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
+		return
+	}
+
+	cookie := http.Cookie{Name: "Auth", Value: jwt, Expires: time.Now().Add(time.Hour * environment.JwtExpiryHours), HttpOnly: true}
+	http.SetCookie(res, &cookie)
 
 	res.Header().Set("Location", "/user/"+userId)
 	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
@@ -148,36 +165,23 @@ func loginHandler(res http.ResponseWriter, req *http.Request) {
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
-func handleInvalidUserIdForRequest(requestedUserId string, requiresSelf bool, res http.ResponseWriter, req *http.Request) bool {
-	log.Printf("Validating request for user with id: %+v \n", requestedUserId)
+type JwtClaims struct {
+	UserId  string
+	IsAdmin bool
+	jwt.StandardClaims
+}
 
-	loggedInUserId, err := session.Get(req, "userId")
+func createJwt(userId string, user *User) (string, error) {
+	// create the token
+	token := jwt.New(jwt.SigningMethodRS256)
 
-	if err != nil {
-		log.Printf("ERROR: User not logged in and attempted to access user %s \n", requestedUserId)
-		httpError := web.HttpError{
-			Code:    web.ErrorCodeUnauthorized,
-			Message: "you must be logged in try and view user information"}
-		web.JsonResponse(res, httpError, http.StatusUnauthorized)
-		return true
-	}
+	log.Printf("User id in token '%+v' \n", userId)
 
-	if requiresSelf && loggedInUserId != requestedUserId {
-		log.Printf("ERROR: User %s attempted to access user %s \n", loggedInUserId, requestedUserId)
-		httpError := web.HttpError{
-			Code:    web.ErrorCodeForbidden,
-			Message: "you can only update yourself"}
-		web.JsonResponse(res, httpError, http.StatusForbidden)
-		return true
-	}
+	token.Claims = JwtClaims{
+		userId,
+		user.IsAdmin,
+		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Hour * environment.JwtExpiryHours).Unix()}}
 
-	validUserId := ValidateId(requestedUserId)
-
-	if !validUserId {
-		log.Printf("ERROR: Invalid user id format '%s'\n", requestedUserId)
-		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat}
-		web.JsonResponse(res, httpError, http.StatusNotFound)
-		return true
-	}
-	return false
+	//Sign and get the complete encoded token as string
+	return token.SignedString(environment.JwtPrivateKey)
 }

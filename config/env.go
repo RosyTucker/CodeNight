@@ -1,7 +1,12 @@
 package config
 
 import (
+	"crypto/rsa"
+	"github.com/dgrijalva/jwt-go"
+	"log"
 	"os"
+	"strconv"
+	"time"
 )
 
 type Env struct {
@@ -10,6 +15,9 @@ type Env struct {
 	GithubSecret          string
 	GithubCallbackUrl     string
 	GithubStateString     string
+	JwtPrivateKey         *rsa.PrivateKey
+	JwtPublicKey          *rsa.PublicKey
+	JwtExpiryHours        time.Duration
 	PostLoginRedirect     string
 	SessionKey            string
 	MongoConnectionString string
@@ -17,12 +25,28 @@ type Env struct {
 }
 
 func GetEnv() Env {
+	jwtPrivateBytes := []byte(noDefault("JWT_PRIVATE_KEY_BYTES"))
+	jwtPublicBytes := []byte(noDefault("JWT_PUBLIC_KEY_BYTES"))
+
+	jwtPrivateKey, err := jwt.ParseRSAPrivateKeyFromPEM(jwtPrivateBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jwtPublicKey, err := jwt.ParseRSAPublicKeyFromPEM(jwtPublicBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return Env{
 		Port:                  defaultWhenEmpty("PORT", "4000"),
 		GithubKey:             noDefault("GITHUB_KEY"),
 		GithubSecret:          noDefault("GITHUB_SECRET"),
 		GithubCallbackUrl:     noDefault("GITHUB_CALLBACK_URL"),
 		GithubStateString:     noDefault("GITHUB_STATE_STRING"),
+		JwtPrivateKey:         jwtPrivateKey,
+		JwtPublicKey:          jwtPublicKey,
+		JwtExpiryHours:        time.Duration(noDefaultInt("JWT_EXPIRY_HOURS")),
 		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
 		SessionKey:            noDefault("SESSION_KEY"),
 		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING"),
@@ -42,6 +66,20 @@ func noDefault(key string) string {
 
 	if len(value) != 0 {
 		return value
+	}
+
+	panic("Missing environment variable for key: " + key)
+}
+
+func noDefaultInt(key string) int {
+	value := os.Getenv(key)
+
+	if len(value) != 0 {
+		intValue, err := strconv.Atoi(value)
+		if err != nil {
+			panic(err)
+		}
+		return intValue
 	}
 
 	panic("Missing environment variable for key: " + key)
