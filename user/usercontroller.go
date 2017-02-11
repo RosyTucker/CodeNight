@@ -14,17 +14,24 @@ var environment = config.GetEnv()
 func AddRoutes(router *mux.Router) {
 	router.HandleFunc("/user/current", web.RequiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", getUserHandler).Methods(http.MethodGet)
-	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", putUserHandler).Methods(http.MethodPut)
+	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", web.RequiresAuth(putUserHandler)).Methods(http.MethodPut)
 	router.HandleFunc("/login", loginHandler).Methods(http.MethodGet)
 	router.HandleFunc("/oauthCallback", oauthCallbackHandler).Methods(http.MethodGet)
 }
 
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
-	userId := mux.Vars(req)["userId"]
+	requestedUserId := mux.Vars(req)["userId"]
 
-	log.Printf("Getting User with Id '%+v' \n", userId)
+	log.Printf("Getting user with Id '%+v' \n", requestedUserId)
 
-	user, err := GetPublicById(userId)
+	if !ValidUserId(requestedUserId) {
+		log.Printf("ERROR: Invalid User Id format: %+v \n", requestedUserId)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: "userId was not formatted correctly"}
+		web.JsonResponse(res, httpError, http.StatusBadRequest)
+		return
+	}
+
+	foundUser, err := GetPublicById(requestedUserId)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to find user %+v \n", err)
@@ -33,33 +40,47 @@ func getUserHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("SUCCESS: Fetched user with id: %+v \n", user)
-	web.JsonResponse(res, user, http.StatusOK)
+	log.Printf("SUCCESS: Fetched user with id: %+v \n", requestedUserId)
+	web.JsonResponse(res, foundUser, http.StatusOK)
 }
 
 func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtClaims) {
-	userId := claims.UserId
+	requestedUserId := claims.UserId
 
-	log.Printf("Finding current user with id: %+v \n", userId)
+	log.Printf("Finding current foundUser with id: %+v \n", requestedUserId)
 
-	user, err := GetById(userId)
+	foundUser, err := GetById(requestedUserId)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to find current user %+v \n", err)
+		log.Printf("ERROR: Failed to find current foundUser %+v \n", err)
 		httpError := web.HttpError{Code: web.ErrorCodeNotFound}
 		web.JsonResponse(res, httpError, http.StatusNotFound)
 		return
 	}
-	log.Printf("SUCCESS: Fetched current user with id: %+v \n", user)
-	web.JsonResponse(res, user, http.StatusOK)
+	log.Printf("SUCCESS: Fetched current user with id: %+v \n", foundUser)
+	web.JsonResponse(res, foundUser, http.StatusOK)
 }
 
-func putUserHandler(res http.ResponseWriter, req *http.Request) {
-	userId := mux.Vars(req)["userId"]
+func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtClaims) {
+	requestedUserId := mux.Vars(req)["userId"]
 
-	log.Printf("Putting User with Id '%+v' \n", userId)
+	log.Printf("Request for Put User with Id '%s' from '%s' \n", requestedUserId, claims.UserId)
 
-	user, err := FromJsonBody(req.Body)
+	if !ValidUserId(requestedUserId) {
+		log.Printf("ERROR: Invalid User Id format: %+v \n", requestedUserId)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: "userId was not formatted correctly"}
+		web.JsonResponse(res, httpError, http.StatusBadRequest)
+		return
+	}
+
+	if requestedUserId != claims.UserId || !claims.IsAdmin {
+		log.Printf("ERROR: User '%s' tried to edit user '%s' \n", claims.UserId, requestedUserId)
+		httpError := web.HttpError{Code: web.ErrorCodeForbidden, Message: "you can only update yourself"}
+		web.JsonResponse(res, httpError, http.StatusForbidden)
+		return
+	}
+
+	putUser, err := FromJsonBody(req.Body)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
@@ -68,7 +89,7 @@ func putUserHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = Replace(userId, user)
+	err = Replace(requestedUserId, putUser)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to PUT user %+v \n", err)
@@ -77,8 +98,8 @@ func putUserHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("SUCCESS: PUT User with Id '%+v' \n", userId)
-	res.Header().Set("Location", "/user/"+userId)
+	log.Printf("SUCCESS: PUT User with Id '%+v' \n", requestedUserId)
+	res.Header().Set("Location", "/user/"+requestedUserId)
 	res.WriteHeader(http.StatusNoContent)
 }
 

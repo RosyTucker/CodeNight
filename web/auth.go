@@ -47,7 +47,7 @@ func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin b
 		isAdmin,
 		jwt.StandardClaims{ExpiresAt: expiry.Unix()}}
 
-	jwt, err := token.SignedString(environment.JwtPrivateKey)
+	jwtToken, err := token.SignedString(environment.JwtPrivateKey)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to create jwt '%+v' \n", err)
@@ -55,6 +55,6 @@ func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin b
 		return
 	}
 
-	cookie := http.Cookie{Name: "Auth", Value: jwt, Expires: expiry, HttpOnly: true}
+	cookie := http.Cookie{Name: "Auth", Value: jwtToken, Expires: expiry, HttpOnly: true}
 	http.SetCookie(res, &cookie)
 }

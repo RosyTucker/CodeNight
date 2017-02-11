@@ -61,16 +61,16 @@ func CreateIfNotExists(user *User) (string, error) {
 func Replace(userId string, updatedUser *User) error {
 	session := db.Connect().Copy()
 	defer session.Close()
-	usersColl := session.DB("codenight").C("users")
+	dbCollection := session.DB("codenight").C("users")
 
 	var existingUser User
-	err := usersColl.FindId(bson.ObjectIdHex(userId)).One(&existingUser)
+	err := dbCollection.FindId(bson.ObjectIdHex(userId)).One(&existingUser)
 
 	if err != nil {
 		return err
 	}
 
-	user := &User{
+	updatedUser = &User{
 		Id:          existingUser.Id,
 		Name:        updatedUser.Name,
 		Token:       existingUser.Token,
@@ -82,7 +82,7 @@ func Replace(userId string, updatedUser *User) error {
 		AvatarUrl:   existingUser.AvatarUrl,
 		IsAdmin:     existingUser.IsAdmin}
 
-	err = usersColl.UpdateId(existingUser.Id, user)
+	err = dbCollection.UpdateId(existingUser.Id, updatedUser)
 
 	return err
 }
