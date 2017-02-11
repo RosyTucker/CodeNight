@@ -15,7 +15,6 @@ func GetPublicById(userId string) (*PublicUser, error) {
 	publicUser := &PublicUser{
 		Id:          user.Id,
 		Name:        user.Name,
-		UserName:    user.UserName,
 		Description: user.Description,
 		Blog:        user.Blog,
 		Location:    user.Location,
@@ -58,7 +57,7 @@ func CreateIfNotExists(user *User) (string, error) {
 	return user.Id.Hex(), err
 }
 
-func Replace(userId string, updatedUser *User) error {
+func Replace(userId string, updatedUser *PublicUser) error {
 	session := db.Connect().Copy()
 	defer session.Close()
 	dbCollection := session.DB("codenight").C("users")
@@ -70,7 +69,7 @@ func Replace(userId string, updatedUser *User) error {
 		return err
 	}
 
-	updatedUser = &User{
+	update := &User{
 		Id:          existingUser.Id,
 		Name:        updatedUser.Name,
 		Token:       existingUser.Token,
@@ -82,7 +81,7 @@ func Replace(userId string, updatedUser *User) error {
 		AvatarUrl:   existingUser.AvatarUrl,
 		IsAdmin:     existingUser.IsAdmin}
 
-	err = dbCollection.UpdateId(existingUser.Id, updatedUser)
+	err = dbCollection.UpdateId(existingUser.Id, update)
 
 	return err
 }

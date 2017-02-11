@@ -80,7 +80,7 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 		return
 	}
 
-	putUser, err := FromJsonBody(req.Body)
+	putUser, err := PublicFromJsonBody(req.Body)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
@@ -129,20 +129,20 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	githubUser, err := github.GetUser(token)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to get github user", err)
+		log.Printf("ERROR: Failed to get github user '%+v' \n", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
 
 	newUser := &User{
-		Name:      githubUser.Name,
+		Name:      defaultString(githubUser.Name),
 		Token:     web.EncodeJson(token),
-		UserName:  *githubUser.Login,
-		Email:     *githubUser.Email,
-		Blog:      githubUser.Blog,
-		Location:  githubUser.Location,
-		AvatarUrl: githubUser.AvatarURL,
-		IsAdmin:   *githubUser.Login == environment.MasterUser}
+		UserName:  defaultString(githubUser.Login),
+		Email:     defaultString(githubUser.Email),
+		Blog:      defaultString(githubUser.Blog),
+		Location:  defaultString(githubUser.Location),
+		AvatarUrl: defaultString(githubUser.AvatarURL),
+		IsAdmin:   defaultString(githubUser.Login) == environment.MasterUser}
 
 	log.Printf("Creating User with username '%s' if they dont already exist \n", newUser.UserName)
 	userId, err := CreateIfNotExists(newUser)
@@ -158,4 +158,11 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Location", "/user/"+userId)
 	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
+}
+
+func defaultString(point *string) string {
+	if point == nil {
+		return ""
+	}
+	return *point
 }
