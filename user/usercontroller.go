@@ -134,7 +134,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user := &User{
+	newUser := &User{
 		Name:      githubUser.Name,
 		Token:     web.EncodeJson(token),
 		UserName:  *githubUser.Login,
@@ -144,8 +144,8 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		AvatarUrl: githubUser.AvatarURL,
 		IsAdmin:   *githubUser.Login == environment.MasterUser}
 
-	log.Printf("Creating User with username '%s' if they dont already exist \n", user.UserName)
-	userId, err := CreateIfNotExists(user)
+	log.Printf("Creating User with username '%s' if they dont already exist \n", newUser.UserName)
+	userId, err := CreateIfNotExists(newUser)
 
 	if err != nil {
 		log.Printf("ERROR: Failed to create user %+v \n", err)
@@ -154,7 +154,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("Updated User with Id '%+v', adding JWT \n", userId)
 
-	web.SetJwt(res, req, userId, user.IsAdmin)
+	web.SetJwt(res, req, userId, newUser.IsAdmin)
 
 	res.Header().Set("Location", "/user/"+userId)
 	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
