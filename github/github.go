@@ -6,7 +6,6 @@ import (
 	"github.com/rosytucker/codenight/config"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
-	"log"
 	"net/http"
 )
 
@@ -30,7 +29,7 @@ func LoginRedirectUrl() string {
 func GetToken(req *http.Request) (*oauth2.Token, error) {
 	state := req.FormValue("state")
 	if state != oauthStateString {
-		return nil, errors.Errorf("ERROR: Invalid oauth state: '%s'\n", state)
+		return nil, errors.Errorf("Invalid oauth state: '%s'\n", state)
 	}
 	code := req.FormValue("code")
 	token, err := oauthConf.Exchange(oauth2.NoContext, code)
@@ -52,7 +51,7 @@ func GetUser(token *oauth2.Token) (*github.User, error) {
 	githubEmails, _, emailError := client.Users.ListEmails(&github.ListOptions{Page: 1, PerPage: 10})
 
 	if emailError != nil {
-		log.Printf("ERROR: client.Users.ListEmails failed with '%s'\n", emailError)
+		config.Log.ErrorF("client.Users.ListEmails failed with '%s'", emailError)
 		return nil, emailError
 	}
 	githubUser.Email = getPrimaryEmail(githubEmails)
@@ -67,6 +66,6 @@ func getPrimaryEmail(emails []*github.UserEmail) *string {
 			return current.Email
 		}
 	}
-	log.Println("ERROR: Failed to find primary email- returning last one added")
+	config.Log.ErrorF("Failed to find primary email- returning last one added")
 	return emails[len(emails)-1].Email
 }

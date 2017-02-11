@@ -14,13 +14,13 @@ import (
 
 func main() {
 	environment := config.GetEnv()
-
+	config.SetupLogger()
 	db.EstablishInitialConnection(environment)
 	github.ConfigureClient(environment)
 
 	router := mux.NewRouter()
 	user.AddRoutes(router)
 
-	log.Printf("Starting server on port: %s \n", environment.Port)
+	config.Log.DebugF("Starting server on port: %s \n", environment.Port)
 	log.Fatal(http.ListenAndServe(":"+environment.Port, handlers.LoggingHandler(os.Stdout, router)))
 }

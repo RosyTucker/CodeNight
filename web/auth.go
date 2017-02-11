@@ -4,7 +4,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/rosytucker/codenight/config"
-	"log"
 	"net/http"
 	"time"
 )
@@ -19,7 +18,7 @@ func RequiresAuth(next func(http.ResponseWriter, *http.Request, *JwtClaims)) htt
 		})
 
 		if err != nil {
-			log.Printf("ERROR: User not logged in or Invalid JWT '%+v' \n", err)
+			config.Log.InfoF("User not logged in or Invalid JWT '%+v'", err)
 			httpError := HttpError{
 				Code:    ErrorCodeUnauthorized,
 				Message: "you must be logged in try and view user information"}
@@ -40,7 +39,7 @@ func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin b
 	token := jwt.New(jwt.SigningMethodRS256)
 	expiry := time.Now().Add(time.Hour * environment.JwtExpiryHours)
 
-	log.Printf("Creating JWT for '%s' \n", userId)
+	config.Log.InfoF("Creating JWT for '%s'", userId)
 
 	token.Claims = JwtClaims{
 		userId,
@@ -50,7 +49,7 @@ func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin b
 	jwtToken, err := token.SignedString(environment.JwtPrivateKey)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to create jwt '%+v' \n", err)
+		config.Log.ErrorF("Failed to create jwt '%+v'", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}

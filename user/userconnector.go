@@ -1,9 +1,9 @@
 package user
 
 import (
+	"github.com/rosytucker/codenight/config"
 	"github.com/rosytucker/codenight/db"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 )
 
 func GetPublicById(userId string) (*PublicUser, error) {
@@ -46,11 +46,11 @@ func CreateIfNotExists(user *User) (string, error) {
 	}
 
 	if existingUser != nil {
-		log.Printf("User with username '%s' already exists, not creating another\n", user.UserName)
+		config.Log.InfoF("User with username '%s' already exists, not creating another", user.UserName)
 		return existingUser.Id.Hex(), nil
 	}
 
-	log.Printf("User with username '%s' does not exist, creating new user\n", user.UserName)
+	config.Log.InfoF("User with username '%s' does not exist, creating new user", user.UserName)
 	user.Id = bson.NewObjectId()
 	err = usersColl.Insert(&user)
 

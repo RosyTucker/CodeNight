@@ -3,7 +3,6 @@ package config
 import (
 	"crypto/rsa"
 	"github.com/dgrijalva/jwt-go"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -30,12 +29,12 @@ func GetEnv() Env {
 
 	jwtPrivateKey, err := jwt.ParseRSAPrivateKeyFromPEM(jwtPrivateBytes)
 	if err != nil {
-		log.Fatal(err)
+		Log.ErrorF("Failed to get JWT private key '%+v'", err)
 	}
 
 	jwtPublicKey, err := jwt.ParseRSAPublicKeyFromPEM(jwtPublicBytes)
 	if err != nil {
-		log.Fatal(err)
+		Log.ErrorF("Failed to get JWT public key '%+v'", err)
 	}
 
 	return Env{

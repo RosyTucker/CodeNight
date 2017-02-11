@@ -5,7 +5,6 @@ import (
 	"github.com/rosytucker/codenight/config"
 	"github.com/rosytucker/codenight/github"
 	"github.com/rosytucker/codenight/web"
-	"log"
 	"net/http"
 )
 
@@ -22,10 +21,10 @@ func AddRoutes(router *mux.Router) {
 func getUserHandler(res http.ResponseWriter, req *http.Request) {
 	requestedUserId := mux.Vars(req)["userId"]
 
-	log.Printf("Getting user with Id '%+v' \n", requestedUserId)
+	config.Log.InfoF("Getting user with Id '%+v'", requestedUserId)
 
 	if !ValidUserId(requestedUserId) {
-		log.Printf("ERROR: Invalid User Id format: %+v \n", requestedUserId)
+		config.Log.ErrorF("Invalid User Id format: '%+v'", requestedUserId)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: "userId was not formatted correctly"}
 		web.JsonResponse(res, httpError, http.StatusBadRequest)
 		return
@@ -34,47 +33,48 @@ func getUserHandler(res http.ResponseWriter, req *http.Request) {
 	foundUser, err := GetPublicById(requestedUserId)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to find user %+v \n", err)
+		config.Log.ErrorF("Failed to find user '%+v'", err)
 		httpError := web.HttpError{Code: web.ErrorCodeNotFound}
 		web.JsonResponse(res, httpError, http.StatusNotFound)
 		return
 	}
 
-	log.Printf("SUCCESS: Fetched user with id: %+v \n", requestedUserId)
+	config.Log.InfoF(" Fetched user with id: '%+v'", requestedUserId)
+
 	web.JsonResponse(res, foundUser, http.StatusOK)
 }
 
 func getCurrentUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtClaims) {
 	requestedUserId := claims.UserId
 
-	log.Printf("Finding current foundUser with id: %+v \n", requestedUserId)
+	config.Log.InfoF("Finding current user with id: '%+v'", requestedUserId)
 
 	foundUser, err := GetById(requestedUserId)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to find current foundUser %+v \n", err)
+		config.Log.ErrorF("Failed to find current user: '%+v'", err)
 		httpError := web.HttpError{Code: web.ErrorCodeNotFound}
 		web.JsonResponse(res, httpError, http.StatusNotFound)
 		return
 	}
-	log.Printf("SUCCESS: Fetched current user with id: %+v \n", foundUser)
+	config.Log.InfoF("Fetched current user with id: '%+v'", requestedUserId)
 	web.JsonResponse(res, foundUser, http.StatusOK)
 }
 
 func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtClaims) {
 	requestedUserId := mux.Vars(req)["userId"]
 
-	log.Printf("Request for Put User with Id '%s' from '%s' \n", requestedUserId, claims.UserId)
+	config.Log.InfoF("Request for Put User with Id '%s' from '%s'", requestedUserId, claims.UserId)
 
 	if !ValidUserId(requestedUserId) {
-		log.Printf("ERROR: Invalid User Id format: %+v \n", requestedUserId)
+		config.Log.ErrorF("Invalid User Id format: '%+v'", requestedUserId)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: "userId was not formatted correctly"}
 		web.JsonResponse(res, httpError, http.StatusBadRequest)
 		return
 	}
 
 	if requestedUserId != claims.UserId && !claims.IsAdmin {
-		log.Printf("ERROR: User '%s' tried to edit user '%s' \n", claims.UserId, requestedUserId)
+		config.Log.ErrorF("User '%s' tried to edit user '%s'", claims.UserId, requestedUserId)
 		httpError := web.HttpError{Code: web.ErrorCodeForbidden, Message: "you can only update yourself"}
 		web.JsonResponse(res, httpError, http.StatusForbidden)
 		return
@@ -83,16 +83,15 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 	putUser, err := PublicFromJsonBody(req.Body)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
+		config.Log.ErrorF("Failed to read body as json user '%+v'", err)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
 		web.JsonResponse(res, httpError, http.StatusBadRequest)
 		return
 	}
 
 	errors := putUser.Validate()
-	log.Printf("ERRORS %+v \n", errors)
 	if len(errors) != 0 {
-		log.Printf("ERROR: Put user is invalid %+v \n", putUser)
+		config.Log.ErrorF("PUT user format is invalid '%+v' Errors: '%+v'", putUser, errors)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, ValidationErrors: errors}
 		web.JsonResponse(res, httpError, http.StatusBadRequest)
 		return
@@ -101,13 +100,13 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 	err = Replace(requestedUserId, putUser)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to PUT user %+v \n", err)
+		config.Log.ErrorF("Failed to PUT user: '%+v'", err)
 		httpError := web.HttpError{Code: web.ErrorCodeServerError}
 		web.JsonResponse(res, httpError, http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("SUCCESS: PUT User with Id '%+v' \n", requestedUserId)
+	config.Log.InfoF("PUT User with Id '%+v'", requestedUserId)
 	res.Header().Set("Location", "/user/"+requestedUserId)
 	res.WriteHeader(http.StatusNoContent)
 }
@@ -121,7 +120,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	token, err := github.GetToken(req)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to get github token '%s'\n", err)
+		config.Log.ErrorF("Failed to get github token '%+v'", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
@@ -129,7 +128,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	githubUser, err := github.GetUser(token)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to get github user '%+v' \n", err)
+		config.Log.ErrorF("Failed to get github user '%+v'", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
@@ -144,15 +143,16 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		AvatarUrl: defaultString(githubUser.AvatarURL),
 		IsAdmin:   defaultString(githubUser.Login) == environment.MasterUser}
 
-	log.Printf("Creating User with username '%s' if they dont already exist \n", newUser.UserName)
+	config.Log.InfoF("Creating User with username '%s' if they dont already exist", newUser.UserName)
 	userId, err := CreateIfNotExists(newUser)
 
 	if err != nil {
-		log.Printf("ERROR: Failed to create user %+v \n", err)
+		config.Log.ErrorF("Failed to create user '%+v'", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
-	log.Printf("Updated User with Id '%+v', adding JWT \n", userId)
+
+	config.Log.InfoF("Updated User with Id '%+v', adding JWT", userId)
 
 	web.SetJwt(res, req, userId, newUser.IsAdmin)
 
