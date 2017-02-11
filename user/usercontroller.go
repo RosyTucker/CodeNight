@@ -73,7 +73,7 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 		return
 	}
 
-	if requestedUserId != claims.UserId || !claims.IsAdmin {
+	if requestedUserId != claims.UserId && !claims.IsAdmin {
 		log.Printf("ERROR: User '%s' tried to edit user '%s' \n", claims.UserId, requestedUserId)
 		httpError := web.HttpError{Code: web.ErrorCodeForbidden, Message: "you can only update yourself"}
 		web.JsonResponse(res, httpError, http.StatusForbidden)
@@ -85,6 +85,15 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 	if err != nil {
 		log.Printf("ERROR: Failed to read body as json user %+v \n", err)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, Message: err.Error()}
+		web.JsonResponse(res, httpError, http.StatusBadRequest)
+		return
+	}
+
+	errors := putUser.Validate()
+	log.Printf("ERRORS %+v \n", errors)
+	if len(errors) != 0 {
+		log.Printf("ERROR: Put user is invalid %+v \n", putUser)
+		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, ValidationErrors: errors}
 		web.JsonResponse(res, httpError, http.StatusBadRequest)
 		return
 	}
@@ -129,7 +138,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 		Name:      githubUser.Name,
 		Token:     web.EncodeJson(token),
 		UserName:  *githubUser.Login,
-		Email:     githubUser.Email,
+		Email:     *githubUser.Email,
 		Blog:      githubUser.Blog,
 		Location:  githubUser.Location,
 		AvatarUrl: githubUser.AvatarURL,

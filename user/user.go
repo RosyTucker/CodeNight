@@ -11,7 +11,7 @@ type User struct {
 	Name        *string       `json:"name" bson:"name"`
 	Token       string        `json:"-" bson:"token"`
 	UserName    string        `json:"username" bson:"username"`
-	Email       *string       `json:"email" bson:"email"`
+	Email       string        `json:"email" bson:"email"`
 	Description *string       `json:"description" bson:"description"`
 	Blog        *string       `json:"blog" bson:"blog"`
 	Location    *string       `json:"location" bson:"location"`
