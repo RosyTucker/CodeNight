@@ -11,6 +11,6 @@ RUN ./get_dependencies.sh
 
 COPY . /go/src/github.com/rosytucker/codenight
 
-RUN go-wrapper install
+RUN go install
 
-CMD ["go-wrapper", "run"]
+ENTRYPOINT /go/bin/codenight
