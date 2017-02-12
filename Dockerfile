@@ -3,11 +3,11 @@ MAINTAINER "rosytucker" iceroad.co.uk
 
 RUN mkdir -p /go/src/github.com/rosytucker/codenight
 
-COPY deps.sh /go/src/github.com/rosytucker/codenight
+COPY get_dependencies.sh /go/src/github.com/rosytucker/codenight
 
 WORKDIR /go/src/github.com/rosytucker/codenight
 
-RUN ./deps.sh
+RUN ./get_dependencies.sh
 
 COPY . /go/src/github.com/rosytucker/codenight
 
