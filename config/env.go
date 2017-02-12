@@ -18,7 +18,6 @@ type Env struct {
 	JwtPublicKey          *rsa.PublicKey
 	JwtExpiryHours        time.Duration
 	PostLoginRedirect     string
-	SessionKey            string
 	MongoConnectionString string
 	MasterUser            string
 }
@@ -38,7 +37,7 @@ func GetEnv() Env {
 	}
 
 	return Env{
-		Port:                  defaultWhenEmpty("PORT", "4000"),
+		Port:                  noDefault("PORT"),
 		GithubKey:             noDefault("GITHUB_KEY"),
 		GithubSecret:          noDefault("GITHUB_SECRET"),
 		GithubCallbackUrl:     noDefault("GITHUB_CALLBACK_URL"),
@@ -47,7 +46,6 @@ func GetEnv() Env {
 		JwtPublicKey:          jwtPublicKey,
 		JwtExpiryHours:        time.Duration(noDefaultInt("JWT_EXPIRY_HOURS")),
 		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
-		SessionKey:            noDefault("SESSION_KEY"),
 		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING"),
 		MasterUser:            noDefault("MASTER_USER")}
 }
@@ -81,5 +79,5 @@ func noDefaultInt(key string) int {
 		return intValue
 	}
 
-	panic("Missing environment variable for key: " + key)
+	panic("Missing integer environment variable for key: " + key)
 }
