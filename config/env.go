@@ -46,7 +46,7 @@ func GetEnv() Env {
 		JwtPublicKey:          jwtPublicKey,
 		JwtExpiryHours:        time.Duration(noDefaultInt("JWT_EXPIRY_HOURS")),
 		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
-		MongoConnectionString: noDefault("MONGO_CONNECTION_STRING"),
+		MongoConnectionString: noDefault("MONGODB_URI"),
 		MasterUser:            noDefault("MASTER_USER")}
 }
 
