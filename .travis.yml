@@ -19,6 +19,6 @@ after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
     docker push rosytucker/codenight:latest;
-    docker tag rosytucker/codenight registry.heroku.com/codenight-ldn/web
-    docker push registry.heroku.com/codenight-ldn/web
+    docker tag rosytucker/codenight registry.heroku.com/codenight-ldn/web;
+    docker push registry.heroku.com/codenight-ldn/web;
     fi
