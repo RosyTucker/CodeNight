@@ -9,4 +9,4 @@ WORKDIR /go/src/github.com/rosytucker/codenight
 
 RUN go install
 
-ENTRYPOINT /go/bin/codenight
+CMD /go/bin/codenight
