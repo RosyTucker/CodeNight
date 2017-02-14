@@ -18,6 +18,6 @@ script:
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
     docker tag rosytucker/codenight:latest registry.heroku.com/codenight-ldn/web;
     docker push rosytucker/codenight:latest;
-    docker login --email=_ --username=_ --password=$HEROKU_AUTH_TOKEN registry.heroku.com
+    docker login --username=_ --password=$HEROKU_AUTH_TOKEN registry.heroku.com;
     docker push registry.heroku.com/codenight-ldn/web;
     fi
