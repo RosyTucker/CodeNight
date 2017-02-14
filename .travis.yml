@@ -14,12 +14,10 @@ install:
 
 script:
   - docker build -t rosytucker/codenight:latest .
-
-after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker tag rosytucker/codenight:latest registry.heroku.com/codenight-ldn/web;
     docker push rosytucker/codenight:latest;
     docker login --email=_ --username=_ --password=$HEROKU_AUTH_TOKEN registry.heroku.com
-    docker tag rosytucker/codenight registry.heroku.com/codenight-ldn/web;
     docker push registry.heroku.com/codenight-ldn/web;
     fi
