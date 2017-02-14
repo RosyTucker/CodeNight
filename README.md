@@ -8,3 +8,5 @@ Requirements:
 - Go 1.7.4
 
 Build and Run locally: `./local_build.sh` OR `./local_build_docker.sh`
+
+Deployed to heroku through travis
