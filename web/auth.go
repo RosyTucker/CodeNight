@@ -21,7 +21,7 @@ func RequiresAuth(next func(http.ResponseWriter, *http.Request, *JwtClaims)) htt
 			config.Log.InfoF("User not logged in or Invalid JWT '%+v'", err)
 			httpError := HttpError{
 				Code:    ErrorCodeUnauthorized,
-				Message: "you must be logged in try and view user information"}
+				Message: "You must be logged in try and view user information!"}
 			JsonResponse(res, httpError, http.StatusUnauthorized)
 			return
 		}
