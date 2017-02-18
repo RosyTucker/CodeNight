@@ -154,10 +154,8 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 
 	config.Log.InfoF("Updated User with Id '%+v', adding JWT", userId)
 
-	web.SetJwt(res, req, userId, newUser.IsAdmin)
-
 	res.Header().Set("Location", "/user/"+userId)
-	http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
+	web.SetJwt(res, req, userId, newUser.IsAdmin)
 }
 
 func defaultString(point *string) string {

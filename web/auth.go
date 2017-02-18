@@ -4,6 +4,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/rosytucker/codenight/config"
+	"html/template"
 	"net/http"
 	"time"
 )
@@ -35,6 +36,11 @@ type JwtClaims struct {
 	jwt.StandardClaims
 }
 
+type formTemplateViewModel struct {
+	RedirectUri string
+	Token       string
+}
+
 func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin bool) {
 	token := jwt.New(jwt.SigningMethodRS256)
 	expiry := time.Now().Add(time.Hour * environment.JwtExpiryHours)
@@ -54,6 +60,13 @@ func SetJwt(res http.ResponseWriter, req *http.Request, userId string, isAdmin b
 		return
 	}
 
-	cookie := http.Cookie{Name: "Auth", Value: jwtToken, Expires: expiry, HttpOnly: true}
-	http.SetCookie(res, &cookie)
+	formTemp, err := template.ParseFiles("./web/formPost.html")
+
+	if err != nil {
+		config.Log.ErrorF("Failed to create post form template '%+v'", err)
+		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
+		return
+	}
+
+	formTemp.Execute(res, formTemplateViewModel{RedirectUri: environment.PostLoginRedirect, Token: jwtToken})
 }
