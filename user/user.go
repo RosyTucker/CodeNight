@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	Id          bson.ObjectId `bson:"_id,omitempty"`
+	Id          bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Name        string        `json:"name" bson:"name"`
 	Token       string        `json:"-" bson:"token"`
 	UserName    string        `json:"username" bson:"username"`
@@ -20,12 +20,12 @@ type User struct {
 }
 
 type PublicUser struct {
-	Id          bson.ObjectId
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Blog        string `json:"blog"`
-	Location    string `json:"location"`
-	AvatarUrl   string `json:"avatarUrl"`
+	Id          bson.ObjectId `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Blog        string        `json:"blog"`
+	Location    string        `json:"location"`
+	AvatarUrl   string        `json:"avatarUrl"`
 }
 
 func PublicFromJsonBody(userBody io.ReadCloser) (*PublicUser, error) {
