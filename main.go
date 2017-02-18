@@ -14,7 +14,6 @@ import (
 
 func main() {
 	environment := config.GetEnv()
-	config.SetupLogger()
 	db.EstablishInitialConnection(environment)
 	github.ConfigureClient(environment)
 
