@@ -8,6 +8,8 @@ if docker ps | awk -v app="app" 'NR>1{  ($(NF) == app )  }'; then
   docker stop "$app" && docker rm -f "$app"
 fi
 
+godep save
+
 echo ---- Building Image ----
 docker build -t rosytucker/codenight .
 

@@ -32,11 +32,6 @@
 			"Rev": "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 		},
 		{
-			"ImportPath": "github.com/gorilla/handlers",
-			"Comment": "v1.2-3-g6d39a51",
-			"Rev": "6d39a51b4b5238fb818fe7ee0d0527dc5bf16d07"
-		},
-		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Comment": "v1.3.0",
 			"Rev": "392c28fe23e1c45ddba891b0320b3b5df220beea"
@@ -45,6 +40,16 @@
 			"ImportPath": "github.com/pkg/errors",
 			"Comment": "v0.8.0-2-g248dadf",
 			"Rev": "248dadf4e9068a0b3e79f02ed0a610d935de5302"
+		},
+		{
+			"ImportPath": "github.com/rs/cors",
+			"Comment": "v1.0",
+			"Rev": "a62a804a8a009876ca59105f7899938a1349f4b3"
+		},
+		{
+			"ImportPath": "github.com/rs/xhandler",
+			"Comment": "v1.0-1-ged27b6f",
+			"Rev": "ed27b6fd65218132ee50cd95f38474a3d8a2cd12"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

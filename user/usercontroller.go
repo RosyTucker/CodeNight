@@ -11,7 +11,7 @@ import (
 var environment = config.GetEnv()
 
 func AddRoutes(router *mux.Router) {
-	router.HandleFunc("/user/current", web.RequiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
+	router.HandleFunc("/user", web.RequiresAuth(getCurrentUserHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", getUserHandler).Methods(http.MethodGet)
 	router.HandleFunc("/user/{userId:[A-Za-z0-9]+}", web.RequiresAuth(putUserHandler)).Methods(http.MethodPut)
 	router.HandleFunc("/login", loginHandler).Methods(http.MethodGet)
