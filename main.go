@@ -28,4 +28,3 @@ func main() {
 	config.Log.DebugF("Starting server on port: %s \n", environment.Port)
 	log.Fatal(http.ListenAndServe(":"+environment.Port, corsOptions.Handler(router)))
 }
-n
