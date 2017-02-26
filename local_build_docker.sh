@@ -28,6 +28,7 @@ winpty docker run -t --rm -i -e JWT_EXPIRY_HOURS=$JWT_EXPIRY_HOURS \
                         -e GITHUB_STATE_STRING=$GITHUB_STATE_STRING \
                         -e GITHUB_CALLBACK_URL=$GITHUB_CALLBACK_URL \
                         -e GITHUB_SECRET=$GITHUB_SECRET \
+                        -e DB_NAME=$DB_NAME \
                          -e GITHUB_KEY=$GITHUB_KEY \
                         -e PORT=$PORT \
                         --name $app \

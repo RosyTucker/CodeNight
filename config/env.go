@@ -19,6 +19,7 @@ type Env struct {
 	JwtExpiryHours        time.Duration
 	PostLoginRedirect     string
 	MongoConnectionString string
+	DbName                string
 	MasterUser            string
 }
 
@@ -47,6 +48,7 @@ func GetEnv() Env {
 		JwtExpiryHours:        time.Duration(noDefaultInt("JWT_EXPIRY_HOURS")),
 		PostLoginRedirect:     noDefault("POST_LOGIN_REDIRECT"),
 		MongoConnectionString: noDefault("MONGODB_URI"),
+		DbName:                noDefault("DB_NAME"),
 		MasterUser:            noDefault("MASTER_USER")}
 }
 

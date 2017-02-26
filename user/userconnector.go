@@ -6,6 +6,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+var dbName = config.GetEnv().DbName;
+
 func GetPublicById(userId string) (*PublicUser, error) {
 	user, err := GetById(userId)
 	if err != nil {
@@ -26,7 +28,7 @@ func GetPublicById(userId string) (*PublicUser, error) {
 func GetById(userId string) (*User, error) {
 	session := db.Connect().Copy()
 	defer session.Close()
-	usersColl := session.DB("codenight").C("users")
+	usersColl := session.DB(dbName).C("users")
 
 	var result *User
 	err := usersColl.FindId(bson.ObjectIdHex(userId)).One(&result)
@@ -36,7 +38,7 @@ func GetById(userId string) (*User, error) {
 func CreateIfNotExists(user *User) (string, error) {
 	session := db.Connect().Copy()
 	defer session.Close()
-	usersColl := session.DB("codenight").C("users")
+	usersColl := session.DB(dbName).C("users")
 
 	var existingUser *User
 	err := usersColl.Find(bson.M{"username": user.UserName}).One(&existingUser)
@@ -60,7 +62,7 @@ func CreateIfNotExists(user *User) (string, error) {
 func Replace(userId string, updatedUser *PublicUser) error {
 	session := db.Connect().Copy()
 	defer session.Close()
-	dbCollection := session.DB("codenight").C("users")
+	dbCollection := session.DB(dbName).C("users")
 
 	var existingUser User
 	err := dbCollection.FindId(bson.ObjectIdHex(userId)).One(&existingUser)
