@@ -16,7 +16,7 @@ func ConfigureClient(environment config.Env) {
 	oauthConf = &oauth2.Config{
 		ClientID:     environment.GithubKey,
 		ClientSecret: environment.GithubSecret,
-		Scopes:       []string{"user", "repo"},
+		Scopes:       []string{"user"},
 		Endpoint:     githuboauth.Endpoint}
 
 	oauthStateString = environment.GithubStateString

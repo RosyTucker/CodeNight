@@ -6,6 +6,7 @@ import (
 	"github.com/rosytucker/codenight/github"
 	"github.com/rosytucker/codenight/web"
 	"net/http"
+	"time"
 )
 
 var environment = config.GetEnv()
@@ -134,14 +135,17 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	newUser := &User{
-		Name:      defaultString(githubUser.Name),
-		Token:     web.EncodeJson(token),
-		UserName:  defaultString(githubUser.Login),
-		Email:     defaultString(githubUser.Email),
-		Blog:      defaultString(githubUser.Blog),
-		Location:  defaultString(githubUser.Location),
-		AvatarUrl: defaultString(githubUser.AvatarURL),
-		IsAdmin:   defaultString(githubUser.Login) == environment.MasterUser}
+		Name:        defaultString(githubUser.Name),
+		Token:       web.EncodeJson(token),
+		UserName:    defaultString(githubUser.Login),
+		Email:       defaultString(githubUser.Email),
+		Blog:        defaultString(githubUser.Blog),
+		Location:    defaultString(githubUser.Location),
+		AvatarUrl:   defaultString(githubUser.AvatarURL),
+		Company:     defaultString(githubUser.Company),
+		Description: defaultString(githubUser.Bio),
+		MemberSince: time.Now().UTC().String(),
+		IsAdmin:     defaultString(githubUser.Login) == environment.MasterUser}
 
 	config.Log.InfoF("Creating User with username '%s' if they dont already exist", newUser.UserName)
 	userId, err := CreateIfNotExists(newUser)

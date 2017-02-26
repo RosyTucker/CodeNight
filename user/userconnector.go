@@ -6,7 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-var dbName = config.GetEnv().DbName;
+var dbName = config.GetEnv().DbName
 
 func GetPublicById(userId string) (*PublicUser, error) {
 	user, err := GetById(userId)
@@ -81,6 +81,8 @@ func Replace(userId string, updatedUser *PublicUser) error {
 		Blog:        updatedUser.Blog,
 		Location:    updatedUser.Location,
 		AvatarUrl:   existingUser.AvatarUrl,
+		MemberSince: existingUser.MemberSince,
+		Company:     updatedUser.Company,
 		IsAdmin:     existingUser.IsAdmin}
 
 	err = dbCollection.UpdateId(existingUser.Id, update)

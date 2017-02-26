@@ -15,7 +15,9 @@ type User struct {
 	Description string        `json:"description" bson:"description"`
 	Blog        string        `json:"blog" bson:"blog"`
 	Location    string        `json:"location" bson:"location"`
+	Company     string        `json:"company" bson:"company"`
 	AvatarUrl   string        `json:"avatarUrl" bson:"avatar_url"`
+	MemberSince string        `json:"memberSince" bson:"memberSince"`
 	IsAdmin     bool          `json:"isAdmin" bson:"is_admin"`
 }
 
@@ -25,6 +27,7 @@ type PublicUser struct {
 	Description string        `json:"description"`
 	Blog        string        `json:"blog"`
 	Location    string        `json:"location"`
+	Company     string        `json:"company"`
 	AvatarUrl   string        `json:"avatarUrl"`
 }
 
