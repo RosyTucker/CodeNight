@@ -20,7 +20,7 @@ func main() {
 	user.AddRoutes(router)
 
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost:3000", "https://codenight-ldn-ui.herokuapp.com"},
 		AllowedHeaders:   []string{"*"},
 		AllowedMethods:   []string{"GET", "OPTIONS", "POST", "PUT"},
 		AllowCredentials: true,
@@ -28,3 +28,4 @@ func main() {
 	config.Log.DebugF("Starting server on port: %s \n", environment.Port)
 	log.Fatal(http.ListenAndServe(":"+environment.Port, corsOptions.Handler(router)))
 }
+n
