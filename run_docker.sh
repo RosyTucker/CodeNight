@@ -15,7 +15,8 @@ echo Running on Port $PORT within container
 
 winpty docker run -t -i -e JWT_EXPIRY_HOURS=$JWT_EXPIRY_HOURS \
                         -e POST_LOGIN_REDIRECT=$POST_LOGIN_REDIRECT \
-                        -e MONGO_CONNECTION_STRING=$MONGO_CONNECTION_STRING \
+                        -e MONGODB_URI=$MONGODB_URI \
+                        -e DB_NAME=$DB_NAME \
                         -e MASTER_USER=$MASTER_USER \
                         -e JWT_PUBLIC_KEY_BYTES="$JWT_PUBLIC_KEY_BYTES" \
                         -e JWT_PRIVATE_KEY_BYTES="$JWT_PRIVATE_KEY_BYTES" \

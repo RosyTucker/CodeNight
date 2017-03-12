@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rosytucker/codenight/config"
 	"github.com/rosytucker/codenight/db"
-	"github.com/rosytucker/codenight/github"
 	"github.com/rosytucker/codenight/user"
 	"github.com/rs/cors"
 	"log"
@@ -14,7 +13,6 @@ import (
 func main() {
 	environment := config.GetEnv()
 	db.EstablishInitialConnection(environment)
-	github.ConfigureClient(environment)
 
 	router := mux.NewRouter()
 	user.AddRoutes(router)

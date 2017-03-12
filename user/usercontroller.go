@@ -91,6 +91,7 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 	}
 
 	errors := putUser.Validate()
+
 	if len(errors) != 0 {
 		config.Log.ErrorF("PUT user format is invalid '%+v' Errors: '%+v'", putUser, errors)
 		httpError := web.HttpError{Code: web.ErrorCodeInvalidFormat, ValidationErrors: errors}
@@ -113,20 +114,20 @@ func putUserHandler(res http.ResponseWriter, req *http.Request, claims *web.JwtC
 }
 
 func loginHandler(res http.ResponseWriter, req *http.Request) {
-	url := github.LoginRedirectUrl()
+	url := github.CreateConfig(environment).LoginRedirectUrl
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
 func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
-	token, err := github.GetToken(req)
+	client, err := github.New(req, github.CreateConfig(environment))
 
 	if err != nil {
-		config.Log.ErrorF("Failed to get github token '%+v'", err)
+		config.Log.ErrorF("Failed to create github client '%+v'", err)
 		http.Redirect(res, req, environment.PostLoginRedirect, http.StatusTemporaryRedirect)
 		return
 	}
 
-	githubUser, err := github.GetUser(token)
+	githubUser, err := client.GetUser(req)
 
 	if err != nil {
 		config.Log.ErrorF("Failed to get github user '%+v'", err)
@@ -136,7 +137,7 @@ func oauthCallbackHandler(res http.ResponseWriter, req *http.Request) {
 
 	newUser := &User{
 		Name:        defaultString(githubUser.Name),
-		Token:       web.EncodeJson(token),
+		Token:       web.EncodeJson(client.Token),
 		UserName:    defaultString(githubUser.Login),
 		Email:       defaultString(githubUser.Email),
 		Blog:        defaultString(githubUser.Blog),
